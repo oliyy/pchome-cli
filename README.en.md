@@ -19,6 +19,22 @@ The default human-facing language is Traditional Chinese (Taiwan). To switch the
 go install github.com/oliy/pchome-cli/cmd/pchome@latest
 ```
 
+Prebuilt binaries are also published on [GitHub Releases](https://github.com/oliy/pchome-cli/releases). Download the archive for your platform, extract it, and place `pchome` in your `PATH`.
+
+Homebrew (tap):
+
+```bash
+brew tap oliyy/tap
+brew install pchome-cli
+```
+
+Scoop:
+
+```powershell
+scoop bucket add oliyy https://github.com/oliyy/scoop-bucket.git
+scoop install oliyy/pchome-cli
+```
+
 ## Quickstart
 
 ```bash
@@ -184,3 +200,41 @@ go run ./cmd/pchome recommend DMAB3X-A900EVNNM --top 10 --why
 - Machine-readable output keeps stable English schema keys regardless of locale, so agent integrations do not break.
 - The current schema version is `--schema-version v1`.
 - Run `go test ./...` to execute the current unit tests.
+
+## Build And Release
+
+Recommended maintainer workflow:
+
+```bash
+# Fast local build for the current platform
+make build
+
+# Unit tests + GoReleaser config validation
+make verify
+
+# Simulate a full release locally into ./dist
+make release-snapshot
+```
+
+On first run, `make verify` and `make release-snapshot` automatically download and cache the pinned GoReleaser version.
+
+For an actual release:
+
+```bash
+git tag -a v0.1.0 -m "v0.1.0"
+git push origin v0.1.0
+```
+
+After a `v*` tag is pushed, GitHub Actions runs the release workflow and GoReleaser publishes macOS, Linux, and Windows archives for `amd64` and `arm64`, plus `checksums.txt`, to GitHub Releases.
+
+Homebrew / Scoop also require a small amount of one-time setup:
+
+- Create an `oliyy/homebrew-tap` repository for `Formula/pchome-cli.rb`
+- Create an `oliyy/scoop-bucket` repository for `pchome-cli.json`
+- Add a `PACKAGE_REPOS_TOKEN` GitHub Actions secret to `pchome-cli`
+- That token needs write access to both repositories
+
+Notes:
+
+- The Homebrew path here is a personal tap, not `homebrew/core`
+- GoReleaser updates the tap and bucket on normal release tags; prerelease tags are skipped automatically
