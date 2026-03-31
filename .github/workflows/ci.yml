@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, go-release, pchome-cli]
 
     steps:
       - name: Checkout
