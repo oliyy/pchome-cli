@@ -1,0 +1,30 @@
+Search, inspect, compare, and recommend PChome 24h products.
+
+Examples:
+  pchome search "掃地機器人" --min-price 5000 --max-price 15000
+  pchome view DMBL53-A900JDNJS
+  pchome recommend https://24h.pchome.com.tw/prod/DMBL53-A900JDNJS --why
+  pchome compare DMBL53-A900JDNJS DMBL1C-A900JA04J
+
+Usage:
+  pchome [command]
+
+Available Commands:
+
+  compare     Compare multiple products
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  recommend   Get product recommendations
+  search      Search products
+  suggest     Suggest likely search queries
+  view        View a product in detail
+
+Flags:
+      --format string           Output format: text|json|ndjson (default "text")
+  -h, --help                    help for pchome
+      --name-width int          Default text width for product names (default 30)
+      --schema-version string   Machine-readable schema version (default "v1")
+      --timeout duration        Request timeout (default 20s)
+  -v, --version                 version for pchome
+
+Use "pchome [command] --help" for more information about a command.

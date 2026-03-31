@@ -1,0 +1,29 @@
+version = 1
+
+[http]
+timeout = "45s"
+
+[output]
+format = "json"
+schema_version = "v1"
+name_width = 18
+
+[i18n]
+language = "en"
+
+[search]
+limit = 25
+columns = ["#", "name", "price", "url"]
+
+[recommend]
+top = 7
+show_why = true
+
+[compare]
+columns = ["name", "price", "qty"]
+
+[suggest]
+limit = 4
+
+[hermes]
+token = "abc123"

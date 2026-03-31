@@ -1,0 +1,12 @@
+version = 1
+
+[http]
+timeout = "20s"
+
+[output]
+format = "text"
+schema_version = "v1"
+name_width = 30
+
+[i18n]
+language = "ja"
