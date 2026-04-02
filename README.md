@@ -1,4 +1,4 @@
-# PChome 24h - Command Line Interface
+# PChome 24h 命令列工具 (CLI)
 
 <p align="center">
   <img src="./docs/banner.png" alt="pchome-cli" width="600" />
