@@ -21,6 +21,22 @@ CLI 針對兩種使用方式設計：
 go install github.com/oliy/pchome-cli/cmd/pchome@latest
 ```
 
+也可以從 [GitHub Releases](https://github.com/oliy/pchome-cli/releases) 下載對應平台的預編譯 binary，解壓後把 `pchome` 放進你的 `PATH`。
+
+Homebrew（tap）：
+
+```bash
+brew tap oliyy/tap
+brew install pchome-cli
+```
+
+Scoop：
+
+```powershell
+scoop bucket add oliyy https://github.com/oliyy/scoop-bucket.git
+scoop install oliyy/pchome-cli
+```
+
 ## 快速開始
 
 ```bash
@@ -186,3 +202,41 @@ go run ./cmd/pchome recommend DMAB3X-A900EVNNM --top 10 --why
 - 機器可讀輸出一律維持英文 schema key，避免 locale 變動破壞 agent 整合。
 - 目前 schema 版本為 `--schema-version v1`。
 - 執行 `go test ./...` 可跑目前的單元測試。
+
+## 建置與釋出
+
+維護者日常建議流程：
+
+```bash
+# 目前平台快速建置
+make build
+
+# 單元測試 + 檢查 GoReleaser 設定
+make verify
+
+# 模擬一次完整 release，產物會出現在 ./dist
+make release-snapshot
+```
+
+`make verify` / `make release-snapshot` 第一次執行時會自動下載並快取固定版本的 GoReleaser。
+
+正式釋出流程：
+
+```bash
+git tag -a v0.1.0 -m "v0.1.0"
+git push origin v0.1.0
+```
+
+推上 `v*` tag 之後，GitHub Actions 會執行 release workflow，使用 GoReleaser 建立 macOS、Linux、Windows 的 `amd64` / `arm64` binary archive，並附上 `checksums.txt` 到 GitHub Releases。
+
+Homebrew / Scoop 另外需要先準備：
+
+- 建立 `oliyy/homebrew-tap` repository，讓 GoReleaser 更新 `Formula/pchome-cli.rb`
+- 建立 `oliyy/scoop-bucket` repository，讓 GoReleaser 更新 `pchome-cli.json`
+- 在 `pchome-cli` repository 的 GitHub Actions secrets 加上 `PACKAGE_REPOS_TOKEN`
+- `PACKAGE_REPOS_TOKEN` 需要能寫入上述兩個 repository
+
+補充：
+
+- 目前 Homebrew 走的是「自有 tap」路線，不是 `homebrew/core`
+- GoReleaser 會在正式 release tag 時更新 tap / bucket；prerelease tag 會自動略過
