@@ -1,6 +1,6 @@
 搜尋、檢視、比較與推薦 PChome 24h 商品。
 
-範例:
+範例：
   pchome search "掃地機器人" --min-price 5000 --max-price 15000
   pchome view DMBL53-A900JDNJS
   pchome recommend https://24h.pchome.com.tw/prod/DMBL53-A900JDNJS --why
@@ -11,20 +11,20 @@
 
 可用指令：
 
-  compare     比較多個商品
+  compare     比較多項商品
   completion  產生指定 shell 的自動補全腳本
-  help        顯示任一指令的說明
-  recommend   取得商品推薦
+  help        顯示指令的說明
+  recommend   取得推薦商品
   search      搜尋商品
-  suggest     提供可能的搜尋關鍵字
+  suggest     提供搜尋建議
   view        檢視商品詳情
 
-旗標：
+選項：
       --format string           輸出格式：text|json|ndjson (default "text")
   -h, --help                    顯示 pchome 的說明
-      --name-width int          文字輸出中的商品名稱欄寬 (default 30)
+      --name-width int          文字輸出時的商品名稱欄位寬度 (default 30)
       --schema-version string   機器可讀輸出的 schema 版本 (default "v1")
-      --timeout duration        請求逾時時間 (default 20s)
+      --timeout duration        API 請求逾時時間 (default 20s)
   -v, --version                 顯示 pchome 的版本資訊
 
-使用 "pchome [command] --help" 取得指令的更多資訊。
+使用 "pchome [command] --help" 取得指令的詳細資訊。
