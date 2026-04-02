@@ -1,68 +1,140 @@
+# PChome 24h - Command Line Interface
+
 <p align="center">
-  <img src="./banner.png" alt="pchome-cli" />
+  <img src="./docs/banner.png" alt="pchome-cli" width="600" />
 </p>
 
-# pchome-cli
+Fast, script-friendly CLI for searching PChome 24h products, viewing product details, comparing products, and getting recommendations. JSON-first output, human-friendly tables, and a normalized schema built in.
 
-`pchome` is a Go CLI for searching PChome 24h products, viewing product details, comparing products, and getting recommendations.
+## Features
 
-The CLI is optimized for two modes:
-
-- Human-friendly text output for browsing and decision-making.
-- Agent-friendly `json` and `ndjson` output with a normalized schema (`v1`).
-
-The default human-facing language is Traditional Chinese (Taiwan). To switch the app to English, set `i18n.language = "en"` in `~/.pchome/config.toml`.
+- **Search** - search products with filters for brand, price range, rating, stock status, 24h arrival, sorting, and custom column output
+- **View** - display detailed product information including specs, images, and warnings
+- **Recommend** - get product recommendations based on a reference product, with optional reasoning
+- **Compare** - compare multiple products side-by-side with customizable columns
+- **Suggest** - get autocomplete suggestions for search queries
+- **Multi-format output** - human-friendly text tables, JSON, and NDJSON for scripting and agent integrations
+- **Normalized schema** - stable English schema keys (`v1`) regardless of locale, so agent integrations do not break
+- **i18n** - Traditional Chinese (default) and English interface
+- **Flexible product input** - accepts raw IDs (`DRAA5K-A900JOK9O`), suffixed IDs (`DRAA5K-A900JOK9O-000`), or full PChome URLs
+- **Configurable** - per-command defaults, column ordering, and output preferences via `~/.pchome/config.toml`
 
 ## Installation
 
-```bash
-go install github.com/oliy/pchome-cli/cmd/pchome@latest
-```
-
-Prebuilt binaries are also published on [GitHub Releases](https://github.com/oliy/pchome-cli/releases). Download the archive for your platform, extract it, and place `pchome` in your `PATH`.
-
-Homebrew (tap):
+### Homebrew
 
 ```bash
-brew tap oliyy/tap
-brew install pchome-cli
+brew install oliyy/tap/pchome-cli
 ```
 
-Scoop:
+### Scoop (Windows)
 
 ```powershell
 scoop bucket add oliyy https://github.com/oliyy/scoop-bucket.git
 scoop install oliyy/pchome-cli
 ```
 
-## Quickstart
+### Prebuilt Binaries
+
+Download the archive for your platform from [GitHub Releases](https://github.com/oliy/pchome-cli/releases), extract it, and place `pchome` in your `PATH`.
+
+### Build from Source
 
 ```bash
-# Search
-go run ./cmd/pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
-
-# View a product
-go run ./cmd/pchome view DRAA5K-A900JOK9O
-
-# Recommendations
-go run ./cmd/pchome recommend DMBL53-A900JDNJS --top 8 --why
-
-# Compare products
-go run ./cmd/pchome compare DRAA5K-A900JOK9O DMBL53-A900JDNJS
-
-# Suggestions
-go run ./cmd/pchome suggest "掃地機"
+git clone https://github.com/oliy/pchome-cli.git
+cd pchome-cli
+make build
 ```
 
-## Command Model
+Run:
 
-The command surface is intentionally task-oriented:
+```bash
+./bin/pchome --help
+```
 
-- `search QUERY`
-- `view PRODUCT`
-- `recommend PRODUCT`
-- `compare PRODUCT [PRODUCT...]`
-- `suggest QUERY`
+Or install globally:
+
+```bash
+go install github.com/oliy/pchome-cli/cmd/pchome@latest
+```
+
+Help:
+
+- `pchome --help` shows top-level command groups.
+- You can get help for a specific command with `pchome <command> --help`.
+
+## Quick Start
+
+```bash
+# Search for products
+pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
+
+# View a product
+pchome view DRAA5K-A900JOK9O
+
+# Get recommendations
+pchome recommend DMBL53-A900JDNJS --top 8
+
+# Compare products
+pchome compare DRAA5K-A900JOK9O DMBL53-A900JDNJS
+
+# Autocomplete suggestions
+pchome suggest "掃地機"
+```
+
+## Commands
+
+### Search
+
+```bash
+# Basic search
+pchome search "掃地機器人"
+
+# Price range and stock filter
+pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
+
+# Brand and rating filter
+pchome search "掃地機器人" --brand Roborock --min-rating 4.8
+
+# 24h arrival only, sorted by price
+pchome search "掃地機器人" --arrival-24h --sort price-asc
+
+# Custom text columns
+pchome search "掃地機器人" \
+  --columns "#,name,price,rating,reviews,24h,brand,qty,url"
+```
+
+### View
+
+```bash
+pchome view DRAA5K-A900JOK9O
+pchome view DRAA5K-A900JOK9O --format json
+pchome view https://24h.pchome.com.tw/prod/DRAA5K-A900JOK9O
+```
+
+### Recommend
+
+```bash
+# Basic recommendations
+pchome recommend DMBL53-A900JDNJS --top 8
+
+# Explain why each item was recommended
+pchome recommend DMAB3X-A900EVNNM --top 10 --why
+```
+
+### Compare
+
+```bash
+pchome compare DRAA5K-A900JOK9O DMBL53-A900JDNJS
+```
+
+### Suggest
+
+```bash
+pchome suggest "掃地機"
+```
+
+### Product Input
 
 `PRODUCT` can be:
 
@@ -70,21 +142,43 @@ The command surface is intentionally task-oriented:
 - A suffixed product ID like `DRAA5K-A900JOK9O-000`
 - A full PChome product URL like `https://24h.pchome.com.tw/prod/DRAA5K-A900JOK9O`
 
-## Repository Layout
+## Output Formats
 
-The source tree now follows a more typical open-source Go CLI structure:
+### Text
 
-- `cmd/`: Cobra command layer and text rendering
-- `cmd/pchome/`: binary entrypoint
-- `pkg/catalog/`: normalized product models and aggregate service
-- `pkg/config/`: config loading and validation
-- `pkg/i18n/`: language handling and translation catalog
-- `pkg/output/`: shared table rendering
-- `pkg/pchome/`: upstream PChome API clients
-- `cmd/testdata/`: golden fixtures for CLI help and text output
-- `pkg/*/testdata/`: package-level test fixtures
+Human-readable output with compact tables (default):
 
-## Config
+```bash
+pchome search "掃地機器人" --limit 3
+```
+
+### JSON
+
+Machine-readable output for scripting and automation:
+
+```bash
+pchome search "掃地機器人" --limit 3 --format json
+pchome view DRAA5K-A900JOK9O --format json
+```
+
+### NDJSON
+
+Line-delimited items for streaming and agent integrations:
+
+```bash
+pchome search "掃地機器人" --limit 5 --format ndjson
+pchome recommend DMBL53-A900JDNJS --top 5 --format ndjson
+```
+
+`ndjson` is supported on `search`, `recommend`, `compare`, and `suggest`.
+
+Data goes to stdout, errors and progress to stderr for clean piping:
+
+```bash
+pchome search "掃地機器人" --format json | jq '.products[] | select(.price < 10000)'
+```
+
+## Configuration
 
 On startup, `pchome` ensures a config file exists at:
 
@@ -94,11 +188,11 @@ On startup, `pchome` ensures a config file exists at:
 
 If the file is missing, it is created automatically with the full default configuration.
 
-Config precedence is:
+Config precedence:
 
-- CLI flags
-- `~/.pchome/config.toml`
-- Built-in defaults
+1. CLI flags
+2. `~/.pchome/config.toml`
+3. Built-in defaults
 
 Example:
 
@@ -142,99 +236,46 @@ token = ""
 
 Notes:
 
-- `columns = []` means “use the built-in default column order for that command”.
+- `columns = []` means "use the built-in default column order for that command".
 - If you set `columns`, that list becomes the default column order for the command.
 - `i18n.language` currently supports `zh-TW` and `en`.
 - The config loader rejects unknown keys so typos do not silently get ignored.
 
-## Output Modes
+## Examples
 
-### Text
-
-Human-oriented output with compact tables for list commands and a structured detail view for `view`.
-
-### JSON
-
-Normalized machine-readable output:
+### Search and filter products
 
 ```bash
-go run ./cmd/pchome search "掃地機器人" --limit 3 --format json
-go run ./cmd/pchome view DRAA5K-A900JOK9O --format json
+# Search with price range
+pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
+
+# Filter by brand and rating
+pchome search "掃地機器人" --brand Roborock --min-rating 4.8
+
+# 24h delivery only, sorted by price
+pchome search "掃地機器人" --arrival-24h --sort price-asc
 ```
 
-### NDJSON
-
-Line-delimited items for list-oriented commands:
+### Get recommendations with reasoning
 
 ```bash
-go run ./cmd/pchome search "掃地機器人" --limit 5 --format ndjson
-go run ./cmd/pchome recommend DMBL53-A900JDNJS --top 5 --format ndjson
+pchome recommend DMAB3X-A900EVNNM --top 10 --why
 ```
 
-`ndjson` is supported on `search`, `recommend`, `compare`, and `suggest`.
-
-## Search Examples
+### Pipe JSON output to jq
 
 ```bash
-# Brand and rating filter
-go run ./cmd/pchome search "掃地機器人" --brand Roborock --min-rating 4.8
-
-# 24h only, sorted by price
-go run ./cmd/pchome search "掃地機器人" --arrival-24h --sort price-asc
-
-# Custom text columns
-go run ./cmd/pchome search "掃地機器人" \
-  --columns "#,name,price,rating,reviews,24h,brand,qty,url"
+# Extract product names under a price threshold
+pchome search "掃地機器人" --format json | jq '.products[] | select(.price < 10000) | .name'
 ```
 
-## Recommendation Example
+### Stream results with NDJSON
 
 ```bash
-# Explain why each item was recommended
-go run ./cmd/pchome recommend DMAB3X-A900EVNNM --top 10 --why
+pchome search "掃地機器人" --limit 20 --format ndjson | while read -r line; do
+  echo "$line" | jq -r '.name'
+done
 ```
 
-## Notes
+## 
 
-- Recommendation token precedence is `hermes.token` -> `PCHOME_HERMES_TOKEN` -> bundled fallback token.
-- Machine-readable output keeps stable English schema keys regardless of locale, so agent integrations do not break.
-- The current schema version is `--schema-version v1`.
-- Run `go test ./...` to execute the current unit tests.
-
-## Build And Release
-
-Recommended maintainer workflow:
-
-```bash
-# Fast local build for the current platform
-make build
-
-# Unit tests + GoReleaser config validation
-make verify
-
-# Simulate a full release locally into ./dist
-make release-snapshot
-```
-
-On first run, `make verify` and `make release-snapshot` automatically download and cache the pinned GoReleaser version.
-
-For an actual release:
-
-```bash
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
-```
-
-After a `v*` tag is pushed, GitHub Actions runs the release workflow and GoReleaser publishes macOS, Linux, and Windows archives for `amd64` and `arm64`, plus `checksums.txt`, to GitHub Releases.
-
-Homebrew / Scoop also require a small amount of one-time setup:
-
-- Create an `oliyy/homebrew-tap` repository for `Formula/pchome-cli.rb`
-- Create an `oliyy/scoop-bucket` repository for `pchome-cli.json`
-- Add a `PACKAGE_REPOS_TOKEN` GitHub Actions secret to `pchome-cli`
-- That token needs write access to both repositories
-
-Notes:
-
-- The Homebrew path here is a personal tap, not `homebrew/core`
-- GoReleaser updates the tap and bucket on normal release tags; prerelease tags are skipped automatically

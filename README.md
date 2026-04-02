@@ -1,106 +1,198 @@
+# PChome 24h 命令列工具 (CLI)
+
 <p align="center">
-  <img src="./banner.png" alt="pchome-cli" />
+  <img src="./docs/banner.png" alt="pchome-cli" width="600" />
 </p>
 
-# pchome-cli
+快速、易於整合腳本的 PChome 24h 購物命令列工具。支援商品搜尋、檢視商品詳情、比較多項商品以及取得商品推薦。內建 JSON 優先輸出、適合人類閱讀的表格格式，以及標準化的資料結構（Schema）。
 
-`pchome` 是一個以 Go 撰寫的 PChome 24h CLI，可用來搜尋商品、檢視商品詳情、比較商品，以及取得推薦結果。
+## 功能特色
 
-CLI 針對兩種使用方式設計：
+- **搜尋 (Search)** - 支援透過關鍵字搜尋商品，並可依照品牌、價格區間、評價、庫存狀態、24h 到貨、排序方式進行篩選，同時支援自訂輸出欄位
+- **檢視 (View)** - 顯示詳細的商品資訊，包含規格、圖片以及相關警告提示
+- **推薦 (Recommend)** - 根據指定商品取得相關的推薦商品，並可選擇顯示推薦原因
+- **比較 (Compare)** - 並排比較多項商品，支援自訂顯示欄位
+- **建議 (Suggest)** - 提供搜尋關鍵字的自動補全與建議
+- **多種輸出格式** - 支援適合閱讀的文字表格格式、供腳本使用的 JSON 格式，以及適合串流或 AI 代理程式（Agent）整合的 NDJSON 格式
+- **標準化資料結構 (Schema)** - 無論語系為何，皆維持穩定的英文欄位鍵值（`v1`），確保 AI 代理程式或腳本整合不會因語系切換而失效
+- **多國語系 (i18n)** - 支援繁體中文（預設）與英文介面
+- **彈性的商品輸入格式** - 支援直接輸入商品編號（例如 `DRAA5K-A900JOK9O`）、帶有後綴的編號（例如 `DRAA5K-A900JOK9O-000`），或是完整的 PChome 商品網址
+- **高度可設定** - 可透過 `~/.pchome/config.toml` 設定各指令的預設值、欄位排序以及輸出偏好
 
-- 適合人類閱讀的文字輸出，方便瀏覽與決策。
-- 適合 AI agent 與程式整合的 `json` / `ndjson` 輸出，並提供穩定的標準化 schema（`v1`）。
+## 安裝方式
 
-預設的人類介面語言為繁體中文（台灣）。如果想改成英文，可在 `~/.pchome/config.toml` 設定 `i18n.language = "en"`。
-
-英文版文件請參考 [README.en.md](./README.en.md)。
-
-## 安裝
-
-```bash
-go install github.com/oliy/pchome-cli/cmd/pchome@latest
-```
-
-也可以從 [GitHub Releases](https://github.com/oliy/pchome-cli/releases) 下載對應平台的預編譯 binary，解壓後把 `pchome` 放進你的 `PATH`。
-
-Homebrew（tap）：
+### Homebrew
 
 ```bash
-brew tap oliyy/tap
-brew install pchome-cli
+brew install oliyy/tap/pchome-cli
 ```
 
-Scoop：
+### Scoop (Windows)
 
 ```powershell
 scoop bucket add oliyy https://github.com/oliyy/scoop-bucket.git
 scoop install oliyy/pchome-cli
 ```
 
+### 預先編譯的二進位檔 (Prebuilt Binaries)
+
+您可以從 [GitHub Releases](https://github.com/oliy/pchome-cli/releases) 下載符合您作業系統的壓縮檔，解壓縮後將 `pchome` 放置於系統的 `PATH` 路徑下。
+
+### 從原始碼編譯
+
+```bash
+git clone https://github.com/oliy/pchome-cli.git
+cd pchome-cli
+make build
+```
+
+執行：
+
+```bash
+./bin/pchome --help
+```
+
+或全域安裝：
+
+```bash
+go install github.com/oliy/pchome-cli/cmd/pchome@latest
+```
+
+取得協助：
+
+- `pchome --help` 會顯示最上層的指令群組。
+- 若要查看特定指令的說明，可使用 `pchome <command> --help`。
+
 ## 快速開始
 
 ```bash
 # 搜尋商品
-go run ./cmd/pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
+pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
 
-# 檢視商品
-go run ./cmd/pchome view DRAA5K-A900JOK9O
+# 檢視商品詳情
+pchome view DRAA5K-A900JOK9O
 
-# 查看推薦
-go run ./cmd/pchome recommend DMBL53-A900JDNJS --top 8 --why
+# 取得商品推薦
+pchome recommend DMBL53-A900JDNJS --top 8
 
-# 比較商品
-go run ./cmd/pchome compare DRAA5K-A900JOK9O DMBL53-A900JDNJS
+# 比較多項商品
+pchome compare DRAA5K-A900JOK9O DMBL53-A900JDNJS
 
-# 搜尋詞建議
-go run ./cmd/pchome suggest "掃地機"
+# 取得搜尋關鍵字建議
+pchome suggest "掃地機"
 ```
 
-## 指令模型
+## 指令說明
 
-CLI 採用以任務為中心的指令設計：
+### 搜尋 (Search)
 
-- `search QUERY`
-- `view PRODUCT`
-- `recommend PRODUCT`
-- `compare PRODUCT [PRODUCT...]`
-- `suggest QUERY`
+```bash
+# 基本搜尋
+pchome search "掃地機器人"
 
-`PRODUCT` 可以是：
+# 價格區間與庫存篩選
+pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
 
-- 原始商品 ID，例如 `DRAA5K-A900JOK9O`
-- 帶尾碼的商品 ID，例如 `DRAA5K-A900JOK9O-000`
-- 完整的 PChome 商品網址，例如 `https://24h.pchome.com.tw/prod/DRAA5K-A900JOK9O`
+# 品牌與評價篩選
+pchome search "掃地機器人" --brand Roborock --min-rating 4.8
 
-## 專案結構
+# 僅限 24h 到貨，並依價格由低至高排序
+pchome search "掃地機器人" --arrival-24h --sort price-asc
 
-目前的原始碼佈局更接近常見的 Go 開源 CLI 專案：
+# 自訂文字輸出欄位
+pchome search "掃地機器人" \
+  --columns "#,name,price,rating,reviews,24h,brand,qty,url"
+```
 
-- `cmd/`: Cobra 指令層與文字輸出邏輯
-- `cmd/pchome/`: 真正的 binary entrypoint
-- `pkg/catalog/`: 標準化商品模型與聚合 service
-- `pkg/config/`: 設定檔讀取與驗證
-- `pkg/i18n/`: 介面語言與翻譯字典
-- `pkg/output/`: 共用表格輸出
-- `pkg/pchome/`: 與 PChome 上游 API 溝通的 client
-- `cmd/testdata/`: CLI 幫助文字與輸出 golden fixtures
-- `pkg/*/testdata/`: 套件層級的測試 fixtures
+### 檢視 (View)
 
-## 設定檔
+```bash
+pchome view DRAA5K-A900JOK9O
+pchome view DRAA5K-A900JOK9O --format json
+pchome view https://24h.pchome.com.tw/prod/DRAA5K-A900JOK9O
+```
 
-啟動時，`pchome` 會先確認以下檔案是否存在：
+### 推薦 (Recommend)
+
+```bash
+# 基本推薦
+pchome recommend DMBL53-A900JDNJS --top 8
+
+# 顯示每項商品的推薦原因
+pchome recommend DMAB3X-A900EVNNM --top 10 --why
+```
+
+### 比較 (Compare)
+
+```bash
+pchome compare DRAA5K-A900JOK9O DMBL53-A900JDNJS
+```
+
+### 建議 (Suggest)
+
+```bash
+pchome suggest "掃地機"
+```
+
+### 商品輸入格式
+
+`PRODUCT` 參數支援以下格式：
+
+- 原始商品編號：`DRAA5K-A900JOK9O`
+- 帶後綴的商品編號：`DRAA5K-A900JOK9O-000`
+- 完整的 PChome 商品網址：`https://24h.pchome.com.tw/prod/DRAA5K-A900JOK9O`
+
+## 輸出格式
+
+### 文字 (Text)
+
+預設選項，以簡潔的表格呈現適合人類閱讀的格式：
+
+```bash
+pchome search "掃地機器人" --limit 3
+```
+
+### JSON
+
+適合腳本與自動化流程的機器可讀格式：
+
+```bash
+pchome search "掃地機器人" --limit 3 --format json
+pchome view DRAA5K-A900JOK9O --format json
+```
+
+### NDJSON
+
+每行一個 JSON 物件，非常適合串流處理與 AI 代理程式整合：
+
+```bash
+pchome search "掃地機器人" --limit 5 --format ndjson
+pchome recommend DMBL53-A900JDNJS --top 5 --format ndjson
+```
+
+`ndjson` 格式支援 `search`、`recommend`、`compare` 與 `suggest` 指令。
+
+資料輸出至 stdout，錯誤訊息與進度則輸出至 stderr，方便您進行管線（Piping）處理：
+
+```bash
+pchome search "掃地機器人" --format json | jq '.products[] | select(.price < 10000)'
+```
+
+## 設定與組態
+
+在啟動時，`pchome` 會確認以下路徑的設定檔是否存在：
 
 ```bash
 ~/.pchome/config.toml
 ```
 
-如果不存在，CLI 會自動建立完整的預設設定檔。
+若檔案不存在，系統會自動建立並填入所有預設設定。
 
 設定優先順序：
 
-- CLI flags
-- `~/.pchome/config.toml`
-- 內建預設值
+1. CLI 指令選項（Flags）
+2. `~/.pchome/config.toml` 設定檔
+3. 內建預設值
 
 範例：
 
@@ -142,101 +234,45 @@ limit = 10
 token = ""
 ```
 
-補充：
+備註：
 
-- `columns = []` 代表「使用該指令的內建預設欄位順序」。
-- 若設定 `columns`，該欄位清單就會成為此指令的預設文字欄位順序。
+- `columns = []` 代表「使用該指令的內建預設欄位排序」。
+- 若您設定了 `columns`，該列表將會成為該指令的預設顯示欄位。
 - `i18n.language` 目前支援 `zh-TW` 與 `en`。
-- 設定檔解析器會拒絕未知欄位，避免拼字錯誤被悄悄忽略。
+- 設定載入器會拒絕未知的鍵值，以防止拼寫錯誤被靜默忽略。
 
-## 輸出模式
+## 實際應用範例
 
-### Text
-
-適合人類閱讀的輸出格式。清單型指令會顯示表格，`view` 則會顯示結構化的商品詳情。
-
-### JSON
-
-標準化的機器可讀輸出：
+### 搜尋並篩選商品
 
 ```bash
-go run ./cmd/pchome search "掃地機器人" --limit 3 --format json
-go run ./cmd/pchome view DRAA5K-A900JOK9O --format json
+# 帶有價格區間與庫存篩選的搜尋
+pchome search "掃地機器人" --min-price 5000 --max-price 15000 --in-stock
+
+# 依照品牌與最低評價進行篩選
+pchome search "掃地機器人" --brand Roborock --min-rating 4.8
+
+# 僅限 24h 到貨，並依價格由低至高排序
+pchome search "掃地機器人" --arrival-24h --sort price-asc
 ```
 
-### NDJSON
-
-適合串流或逐行處理的清單輸出：
+### 取得附帶原因的推薦商品
 
 ```bash
-go run ./cmd/pchome search "掃地機器人" --limit 5 --format ndjson
-go run ./cmd/pchome recommend DMBL53-A900JDNJS --top 5 --format ndjson
+pchome recommend DMAB3X-A900EVNNM --top 10 --why
 ```
 
-`ndjson` 支援 `search`、`recommend`、`compare`、`suggest`。
-
-## 搜尋範例
+### 將 JSON 輸出管線連接至 jq
 
 ```bash
-# 品牌與評價篩選
-go run ./cmd/pchome search "掃地機器人" --brand Roborock --min-rating 4.8
-
-# 只看 24h，到貨依價格排序
-go run ./cmd/pchome search "掃地機器人" --arrival-24h --sort price-asc
-
-# 自訂文字欄位
-go run ./cmd/pchome search "掃地機器人" \
-  --columns "#,name,price,rating,reviews,24h,brand,qty,url"
+# 擷取低於特定價格門檻的商品名稱
+pchome search "掃地機器人" --format json | jq '.products[] | select(.price < 10000) | .name'
 ```
 
-## 推薦範例
+### 使用 NDJSON 進行串流處理
 
 ```bash
-# 顯示每個推薦項目的推薦原因
-go run ./cmd/pchome recommend DMAB3X-A900EVNNM --top 10 --why
+pchome search "掃地機器人" --limit 20 --format ndjson | while read -r line; do
+  echo "$line" | jq -r '.name'
+done
 ```
-
-## 備註
-
-- 推薦 API 的 token 讀取順序為 `hermes.token` -> `PCHOME_HERMES_TOKEN` -> 內建 fallback token。
-- 機器可讀輸出一律維持英文 schema key，避免 locale 變動破壞 agent 整合。
-- 目前 schema 版本為 `--schema-version v1`。
-- 執行 `go test ./...` 可跑目前的單元測試。
-
-## 建置與釋出
-
-維護者日常建議流程：
-
-```bash
-# 目前平台快速建置
-make build
-
-# 單元測試 + 檢查 GoReleaser 設定
-make verify
-
-# 模擬一次完整 release，產物會出現在 ./dist
-make release-snapshot
-```
-
-`make verify` / `make release-snapshot` 第一次執行時會自動下載並快取固定版本的 GoReleaser。
-
-正式釋出流程：
-
-```bash
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
-```
-
-推上 `v*` tag 之後，GitHub Actions 會執行 release workflow，使用 GoReleaser 建立 macOS、Linux、Windows 的 `amd64` / `arm64` binary archive，並附上 `checksums.txt` 到 GitHub Releases。
-
-Homebrew / Scoop 另外需要先準備：
-
-- 建立 `oliyy/homebrew-tap` repository，讓 GoReleaser 更新 `Formula/pchome-cli.rb`
-- 建立 `oliyy/scoop-bucket` repository，讓 GoReleaser 更新 `pchome-cli.json`
-- 在 `pchome-cli` repository 的 GitHub Actions secrets 加上 `PACKAGE_REPOS_TOKEN`
-- `PACKAGE_REPOS_TOKEN` 需要能寫入上述兩個 repository
-
-補充：
-
-- 目前 Homebrew 走的是「自有 tap」路線，不是 `homebrew/core`
-- GoReleaser 會在正式 release tag 時更新 tap / bucket；prerelease tag 會自動略過
