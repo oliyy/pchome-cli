@@ -22,7 +22,7 @@
 選項：
       --format string           輸出格式：text|json|ndjson (default "text")
   -h, --help                    顯示 pchome 的說明
-      --name-width int          文字輸出時的商品名稱欄位寬度 (default 30)
+      --name-width int          商品名稱欄位寬度 (default 30)
       --schema-version string   機器可讀輸出的 schema 版本 (default "v1")
       --timeout duration        API 請求逾時時間 (default 20s)
   -v, --version                 顯示 pchome 的版本資訊
