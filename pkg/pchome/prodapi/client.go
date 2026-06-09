@@ -42,6 +42,7 @@ type ProductsOptions struct {
 // Response can be:
 //   - map keyed by product id (usually suffixed with -000) when at least one id is valid
 //   - empty array [] when no ids are valid
+//   - array of product objects on shape drift
 //
 // This helper always returns a map (possibly empty).
 func (c *Client) Products(ctx context.Context, opt ProductsOptions) (map[string]Product, error) {
@@ -74,15 +75,38 @@ func (c *Client) Products(ctx context.Context, opt ProductsOptions) (map[string]
 		return nil, err
 	}
 
-	var out map[string]Product
-	if err := json.Unmarshal(payload, &out); err == nil {
+	return decodeProductsPayload(payload)
+}
+
+func decodeProductsPayload(payload []byte) (map[string]Product, error) {
+	var rawMap map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &rawMap); err == nil {
+		out := make(map[string]Product, len(rawMap))
+		for key, raw := range rawMap {
+			var product Product
+			if err := json.Unmarshal(raw, &product); err != nil {
+				return nil, fmt.Errorf("decode prodapi product %s: %w", NormalizeID(key), err)
+			}
+			out[key] = product
+		}
 		return out, nil
 	}
 
-	// Empty result case: [].
-	var empty []any
-	if err := json.Unmarshal(payload, &empty); err == nil {
-		return map[string]Product{}, nil
+	var rawList []json.RawMessage
+	if err := json.Unmarshal(payload, &rawList); err == nil {
+		out := make(map[string]Product, len(rawList))
+		for i, raw := range rawList {
+			var product Product
+			if err := json.Unmarshal(raw, &product); err != nil {
+				return nil, fmt.Errorf("decode prodapi product at index %d: %w", i, err)
+			}
+			id := NormalizeID(product.Id)
+			if id == "" {
+				return nil, fmt.Errorf("unexpected prodapi product array item without Id at index %d", i)
+			}
+			out[id] = product
+		}
+		return out, nil
 	}
 
 	return nil, fmt.Errorf("unexpected prodapi response shape")
